@@ -8,6 +8,25 @@ use crate::user::transaction;
 use core::mem::MaybeUninit;
 use core::ops::Deref;
 
+//Added ReadOnly Pointer Interface
+pub struct ReadOnlyPtr<'a, T> {
+    data: &'a T,
+}
+
+
+impl<'a, T: PSafe> ReadOnlyPtr<'a, T> {
+    /// Creates a new ReadOnlyPtr to access a persistent object immutably.
+    pub fn new(data: &'a T) -> Self {
+        ReadOnlyPtr { data }
+    }
+
+    /// Provides immutable access to the underlying data.
+    pub fn read(&self) -> &T {
+        self.data
+    }
+}
+
+
 pub struct RelaxedPBox<T> {
     ptr: PMPtr<T>,
 }
@@ -121,6 +140,11 @@ impl<T: PSafe> PBox<T> {
         core::mem::forget(b);
         ptr
     }
+
+    //Added function
+    pub fn as_read_only(&self) -> ReadOnlyPtr<'_, T> {
+        ReadOnlyPtr::new(self.ptr.as_ref())
+    }
 }
 
 impl<T: Sized> Drop for PBox<T> {
@@ -224,6 +248,12 @@ impl<T: PSafe> PtrRO<T> {
 
     pub unsafe fn into_ptr(self) -> Ptr<T> {
         Ptr { boxed: self.boxed }
+    }
+
+    //Added function
+    pub fn as_read_only<'a>(&'a self) -> ReadOnlyPtr<'a, T> {
+        // Safely create and return a ReadOnlyPtr tied to the lifetime of `self`
+        unsafe { ReadOnlyPtr::new(self.boxed.as_ref_no_journal()) }
     }
 }
 

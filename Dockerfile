@@ -1,4 +1,5 @@
-FROM ubuntu:22.04
+#FROM ubuntu:22.04
+FROM --platform=linux/amd64 ubuntu:22.04
 ENV DEBIAN_FRONTEND noninteractive
 # Install build dependencies
 RUN apt-get update && apt-get -y install curl wget p7zip-full libncurses5 libncursesw5 build-essential qemu-system-arm \
