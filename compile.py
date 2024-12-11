@@ -29,6 +29,7 @@ def main():
             "em",
             "mq",
             "dnn",
+            "dnn_updated",
             "bc",
             "ar",
             "kv_base",
