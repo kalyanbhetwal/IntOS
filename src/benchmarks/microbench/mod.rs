@@ -7,3 +7,4 @@ pub mod kvstore;
 pub mod message_queue;
 pub mod microbench_baseline;
 pub mod periodic_sensing;
+pub mod dnn_updated;

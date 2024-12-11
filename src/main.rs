@@ -163,6 +163,8 @@ fn main() {
     benchmarks::microbench::message_queue::register();
     #[cfg(bench_task = "dnn")]
     benchmarks::microbench::dnn::register();
+    #[cfg(bench_task = "dnn_updated")]
+    benchmarks::microbench::dnn_updated::register();
     #[cfg(bench_task = "bc")]
     //benchmarks::microbench::bitcount_cmp::register();
     benchmarks::microbench::bitcount::register();
@@ -188,6 +190,8 @@ fn main() {
     benchmarks::microbench::microbench_baseline::message_queue::register();
     #[cfg(bench_task = "dnn_base")]
     benchmarks::microbench::microbench_baseline::dnn::register();
+    #[cfg(bench_task = "dnn_updated_base")]
+    benchmarks::microbench::microbench_baseline::dnn_updated::register();
     #[cfg(bench_task = "bc_base")]
     benchmarks::microbench::microbench_baseline::bitcount::register();
     #[cfg(bench_task = "ar_base")]

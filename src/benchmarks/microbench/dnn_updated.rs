@@ -9,7 +9,7 @@ use crate::{
     },
     declare_pm_loop_cnt, nv_for_loop, task,
     user::{
-        pbox::{PRef, Ptr},
+        pbox::{PRef, Ptr, ReadOnlyPtr},
         transaction,
     },
     util::debug_user_tx_cache,
@@ -65,23 +65,23 @@ impl<const W: usize> Tensor1D<W> {
 
 declare_pm_loop_cnt!(H_CNT_1, 0);
 pub fn fc_layer_impl<const FC_H: usize, const FC_W: usize>(
-    param: &Tensor2D<FC_H, FC_W>,
+    param: ReadOnlyPtr<'_, Tensor2D<FC_H, FC_W>>, // Pass as ReadOnlyPtr
     input: &Tensor1D<FC_W>,
     output_ref: PRef<'_, Tensor1D<FC_H>>,
 ) {
     let param_h = FC_H;
     let param_w = FC_W;
     nv_for_loop!(H_CNT_1, i, 0 => param_h, {
-        transaction::run(|j| {
-            let mut sum_i = 0;
-            for j in 0..param_w {
-                sum_i += *param.at(i, j) * *input.at(j);
-            }
-            let output_i = if sum_i > 0 {sum_i} else {0};
+        let mut sum = 0;
+        for j in 0..FC_W {
+            // Use `read()` to access Tensor2D and perform the operation
+            sum += *param.read().at(i, j) * *input.at(j);
+        }
+            let output_i = if sum > 0 {sum} else {0};
+            transaction::run(|j| {
             output_ref.partial_write(|t| t.at(i), output_i, j);
+            });
         });
-
-    });
 }
 declare_pm_loop_cnt!(H_CNT_2, 0);
 pub fn fc_layer_impl2<const FC_H: usize, const FC_W: usize>(
@@ -184,7 +184,8 @@ fn dnn_inference() {
     });
 
     let ob1_ref = ob1.as_pref();
-    fc_layer_impl(&PARAM_1, &input, ob1_ref);
+    let param_read_only = ReadOnlyPtr::new(&PARAM_1);
+    fc_layer_impl(param_read_only, &input, ob1_ref);
     let ob2_ref = ob2.as_pref();
     fc_layer_impl2(&PARAM_2, &mut ob1, ob2_ref);
 
@@ -197,5 +198,5 @@ fn dnn_inference() {
 }
 
 pub fn register() {
-    task::register_app_no_param("dnn infer", 1, task_dnn_inference);
+    task::register_app_no_param("dnn infer new", 1, task_dnn_inference);
 }

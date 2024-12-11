@@ -69,7 +69,9 @@ pub fn fc_layer_impl<const FC_H: usize, const FC_W: usize>(
     input: &Tensor1D<FC_W>,
     output_ref: PRef<'_, Tensor1D<FC_H>>,
 ) {
-    for i in 0..FC_H {
+    let param_h = FC_H;
+    let param_w = FC_W;
+    nv_for_loop!(H_CNT_1, i, 0 => param_h, {
         let mut sum = 0;
         for j in 0..FC_W {
             // Use `read()` to access Tensor2D and perform the operation
@@ -79,7 +81,7 @@ pub fn fc_layer_impl<const FC_H: usize, const FC_W: usize>(
         transaction::run(|tx| {
             output_ref.partial_write(|t| t.at(i), output, tx);
         });
-    }
+    });
 }
 
 declare_pm_loop_cnt!(H_CNT_2, 0);
